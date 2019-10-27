@@ -197,7 +197,8 @@ def _fit_to_block_size(sequence, block_size):
 
 
 def mask_padding_tokens(sequence):
-    """ Replace the padding token with -1 values """
+    """ Padding token, encoded as 0, are represented by the value -1 in the
+    masks """
     padded = sequence.clone()
     padded[padded == 0] = -1
     return padded
@@ -211,7 +212,13 @@ def load_and_cache_examples(args, tokenizer):
 def compute_token_type_ids(batch, separator_token_id):
     """ Segment embeddings as described in [1]
 
-    The values {0,1} were obtained from the repository [2].
+    The values {0,1} were found in the repository [2].
+
+    Attributes:
+        batch: torch.Tensor, size [batch_size, block_size]
+            Batch of input.
+        separator_token_id: int
+            The value of the token that separates the segments.
 
     [1] Liu, Yang, and Mirella Lapata. "Text summarization with pretrained encoders."
         arXiv preprint arXiv:1908.08345 (2019).
@@ -363,6 +370,7 @@ def train(args, model, tokenizer):
                 decoder_encoder_attention_mask=labels_src,
                 decoder_attention_mask=labels_tgt,
                 decoder_lm_labels=labels_tgt,
+                decoder_initialize_randomly=True,
             )
 
             loss = outputs[0]
