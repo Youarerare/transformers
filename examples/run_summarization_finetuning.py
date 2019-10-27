@@ -124,16 +124,16 @@ def process_story(raw_story, tokenizer):
     Raises:
         IndexError: If the stoy is empty or contains no highlights.
     """
-    file_lines = list(
+    nonempty_lines = list(
         filter(lambda x: len(x) != 0, [line.strip() for line in raw_story.split("\n")])
     )
 
     # for some unknown reason some lines miss a period, add it
-    file_lines = [_add_missing_period(line) for line in file_lines]
+    nonempty_lines = [_add_missing_period(line) for line in nonempty_lines]
 
     # gather article lines
     story_lines = []
-    lines = deque(file_lines)
+    lines = deque(nonempty_lines)
     while True:
         try:
             element = lines.popleft()
