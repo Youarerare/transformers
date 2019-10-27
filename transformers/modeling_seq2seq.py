@@ -125,16 +125,16 @@ class PreTrainedSeq2seq(nn.Module):
         }
 
         # Load and initialize the encoder and decoder
-        #  The distinction between encoder and decoder at the model level is made
-        #  by the value of the flag `is_decoder` that we need to set correctly.
-        encoder = kwargs.pop("encoder_model", None)
+        # The distinction between encoder and decoder at the model level is made
+        # by the value of the flag `is_decoder` that we need to set correctly.
+        encoder = kwargs_encoder.pop("encoder_model", None)
         if encoder is None:
             kwargs_encoder["is_decoder"] = False
             encoder = AutoModel.from_pretrained(
                 encoder_pretrained_model_name_or_path, *model_args, **kwargs_encoder
             )
 
-        decoder = kwargs.pop("decoder_model", None)
+        decoder = kwargs_decoder.pop("model", None)
         if decoder is None:
             kwargs_decoder["is_decoder"] = True
             decoder = AutoModelWithLMHead.from_pretrained(
