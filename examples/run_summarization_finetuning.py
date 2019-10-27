@@ -467,9 +467,6 @@ def main():
 
     # Optional parameters
     parser.add_argument(
-        "--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer."
-    )
-    parser.add_argument(
         "--gradient_accumulation_steps",
         type=int,
         default=1,
@@ -501,12 +498,6 @@ def main():
         help="The decoder architecture to be fine-tuned.",
     )
     parser.add_argument(
-        "--learning_rate",
-        default=5e-5,
-        type=float,
-        help="The initial learning rate for Adam.",
-    )
-    parser.add_argument(
         "--max_grad_norm", default=1.0, type=float, help="Max gradient norm."
     )
     parser.add_argument(
@@ -531,12 +522,6 @@ def main():
         help="Batch size per GPU/CPU for training.",
     )
     parser.add_argument("--seed", default=42, type=int)
-    parser.add_argument(
-        "--warmup_steps", default=0, type=int, help="Linear warmup over warmup_steps."
-    )
-    parser.add_argument(
-        "--weight_decay", default=0.0, type=float, help="Weight deay if we apply some."
-    )
     args = parser.parse_args()
 
     if args.model_type != "bert":
