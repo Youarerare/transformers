@@ -71,14 +71,11 @@ class TextDataset(Dataset):
         if os.path.exists(cached_features_file):
             logger.info("Loading features from cached file %s", cached_features_file)
             with open(cached_features_file, "rb") as source:
-                examples = pickle.load(source)
-                self.source_examples = examples["source"]
-                self.target_examples = examples["target"]
+                self.examples = pickle.load(source)
                 return
 
         logger.info("Creating features from dataset at %s", data_dir)
-        self.source_examples = []
-        self.target_examples = []
+        self.examples = {'source': [], 'target': []}
         datasets = ["cnn", "dailymail"]
         for dataset in datasets:
             path_to_stories = os.path.join(data_dir, dataset, "stories")
@@ -96,26 +93,26 @@ class TextDataset(Dataset):
                         continue
 
                 story_seq = _fit_to_block_size(story_ids, block_size)
-                self.source_examples.append(story_seq)
+                self.examples['source'].append(story_seq)
 
                 summary_seq = _fit_to_block_size(summary_ids, block_size)
-                self.target_examples.append(summary_seq)
+                self.examples['summary'].append(summary_seq)
 
         logger.info("Saving features into cache file %s", cached_features_file)
         with open(cached_features_file, "wb") as sink:
             pickle.dump(
-                {"source": self.source_examples, "target": self.target_examples},
+                self.examples,
                 sink,
                 protocol=pickle.HIGHEST_PROTOCOL,
             )
 
     def __len__(self):
-        return len(self.source_examples)
+        return len(self.examples)
 
     def __getitem__(self, items):
         return (
-            torch.tensor(self.source_examples[items]),
-            torch.tensor(self.target_examples[items]),
+            torch.tensor(self.examples["source"][items]),
+            torch.tensor(self.examples["target"][items]),
         )
 
 
