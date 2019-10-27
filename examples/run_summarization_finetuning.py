@@ -1,6 +1,6 @@
 # coding=utf-8
-# Copyright 2018 The Microsoft Reseach team and The HuggingFace Inc. team.
-# Copyright (c) 2018 Microsoft and The HuggingFace Inc.  All rights reserved.
+# Copyright 2019 The HuggingFace Inc. team.
+# Copyright (c) 2019 The HuggingFace Inc.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -82,8 +82,6 @@ class TextDataset(Dataset):
         datasets = ["cnn", "dailymail"]
         for dataset in datasets:
             path_to_stories = os.path.join(data_dir, dataset, "stories")
-            assert os.path.isdir(path_to_stories)
-
             story_filenames_list = os.listdir(path_to_stories)
             for story_filename in story_filenames_list:
                 path_to_story = os.path.join(path_to_stories, story_filename)
