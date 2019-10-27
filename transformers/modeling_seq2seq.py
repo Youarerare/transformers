@@ -42,7 +42,13 @@ class PreTrainedSeq2seq(nn.Module):
         self.decoder = decoder
 
     @classmethod
-    def from_pretrained(cls, encoder_pretrained_model_name_or_path=None, decoder_pretrained_model_name_or_path=None, *model_args, **kwargs):
+    def from_pretrained(
+        cls,
+        encoder_pretrained_model_name_or_path=None,
+        decoder_pretrained_model_name_or_path=None,
+        *model_args,
+        **kwargs
+    ):
         r""" Instantiates an encoder and a decoder from one or two base classes
         of the library from pre-trained model checkpoints.
 
@@ -113,7 +119,7 @@ class PreTrainedSeq2seq(nn.Module):
             if not argument.startswith("decoder_")
         }
         kwargs_decoder = {
-            argument[len("decoder_"):]: value
+            argument[len("decoder_") :]: value
             for argument, value in kwargs.items()
             if argument.startswith("decoder_")
         }
@@ -171,7 +177,7 @@ class PreTrainedSeq2seq(nn.Module):
             if not argument.startswith("decoder_")
         }
         kwargs_decoder = {
-            argument[len("decoder_"):]: value
+            argument[len("decoder_") :]: value
             for argument, value in kwargs.items()
             if argument.startswith("decoder_")
         }
@@ -180,7 +186,9 @@ class PreTrainedSeq2seq(nn.Module):
         encoder_hidden_states = kwargs_encoder.pop("encoder_hidden_states", None)
         if encoder_hidden_states is None:
             encoder_outputs = self.encoder(encoder_input_ids, **kwargs_encoder)
-            encoder_hidden_states = encoder_outputs[0][-1]  # output of the encoder *stack*
+            encoder_hidden_states = encoder_outputs[0][
+                -1
+            ]  # output of the encoder *stack*
         else:
             encoder_outputs = ()
 
@@ -216,9 +224,19 @@ class Model2Model(PreTrainedSeq2seq):
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path, *args, **kwargs):
-        model = super(Model2Model, cls).from_pretrained(encoder_pretrained_model_name_or_path=pretrained_model_name_or_path,
-                                                        decoder_pretrained_model_name_or_path=pretrained_model_name_or_path,
-                                                        **kwargs)
+
+        if (
+            "bert" not in pretrained_model_name_or_path
+            or "roberta" in pretrained_model_name_or_path
+            or "distilbert" in pretrained_model_name_or_path
+        ):
+            raise ValueError("Only the Bert model is currently supported.")
+
+        model = super(Model2Model, cls).from_pretrained(
+            encoder_pretrained_model_name_or_path=pretrained_model_name_or_path,
+            decoder_pretrained_model_name_or_path=pretrained_model_name_or_path,
+            **kwargs
+        )
 
         # Some architectures require for the decoder to be initialized randomly
         # before fine-tuning.

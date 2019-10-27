@@ -524,10 +524,6 @@ def main():
     parser.add_argument("--seed", default=42, type=int)
     args = parser.parse_args()
 
-    if args.model_type != "bert":
-        raise ValueError(
-            "Only the BERT architecture is currently supported for seq2seq."
-        )
     if (
         os.path.exists(args.output_dir)
         and os.listdir(args.output_dir)
