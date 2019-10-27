@@ -88,8 +88,8 @@ class TextDataset(Dataset):
 
                 with open(path_to_story, encoding="utf-8") as source:
                     raw_story = source.read()
-                    story_lines, summary_lines = process_story(raw_story, tokenizer)
-                    if summary_lines is None:
+                    story_lines, summary_lines = process_story(raw_story)
+                    if len(summary_lines) == 0 or len(story_lines) == 0:
                         continue
 
                 story_token_ids, summary_token_ids = _encode_for_summarization(
@@ -115,7 +115,7 @@ class TextDataset(Dataset):
         )
 
 
-def process_story(raw_story, tokenizer):
+def process_story(raw_story):
     """ Extract the story and summary from a story file.
 
     Attributes:
@@ -143,7 +143,7 @@ def process_story(raw_story, tokenizer):
         except IndexError:
             # if "@highlight" is absent from the file we pop
             # all elements until there is None.
-            return story_lines, None
+            return story_lines, []
 
     # gather summary lines
     summary_lines = list(filter(lambda t: not t.startswith("@highlight"), lines))
