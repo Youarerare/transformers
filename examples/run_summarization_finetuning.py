@@ -64,7 +64,7 @@ class TextDataset(Dataset):
     def __init__(self, tokenizer, prefix="train", data_dir="", block_size=512):
         assert os.path.isdir(data_dir)
 
-        # Load features that have already been computed if present
+        # Load the features that have already been computed, if any
         cached_features_file = os.path.join(
             data_dir, "cached_lm_{}_{}".format(block_size, prefix)
         )
@@ -75,8 +75,9 @@ class TextDataset(Dataset):
                 return
 
         logger.info("Creating features from dataset at %s", data_dir)
-        self.examples = {'source': [], 'target': []}
         datasets = ["cnn", "dailymail"]
+
+        self.examples = {"source": [], "target": []}
         for dataset in datasets:
             path_to_stories = os.path.join(data_dir, dataset, "stories")
             story_filenames_list = os.listdir(path_to_stories)
@@ -86,25 +87,23 @@ class TextDataset(Dataset):
                     continue
 
                 with open(path_to_story, encoding="utf-8") as source:
-                    try:
-                        raw_story = source.read()
-                        story_ids, summary_ids = process_story(raw_story, tokenizer)
-                    except IndexError:  # skip ill-formed stories
+                    raw_story = source.read()
+                    story_lines, summary_lines = process_story(raw_story, tokenizer)
+                    if summary_lines is None:
                         continue
 
-                story_seq = _fit_to_block_size(story_ids, block_size)
-                self.examples['source'].append(story_seq)
+                story_token_ids, summary_token_ids = _encode_for_summarization(
+                    story_lines, summary_lines, tokenizer
+                )
+                story_seq = _fit_to_block_size(story_token_ids, block_size)
+                self.examples["source"].append(story_seq)
 
-                summary_seq = _fit_to_block_size(summary_ids, block_size)
-                self.examples['summary'].append(summary_seq)
+                summary_seq = _fit_to_block_size(summary_token_ids, block_size)
+                self.examples["summary"].append(summary_seq)
 
         logger.info("Saving features into cache file %s", cached_features_file)
         with open(cached_features_file, "wb") as sink:
-            pickle.dump(
-                self.examples,
-                sink,
-                protocol=pickle.HIGHEST_PROTOCOL,
-            )
+            pickle.dump(self.examples, sink, protocol=pickle.HIGHEST_PROTOCOL)
 
     def __len__(self):
         return len(self.examples)
@@ -141,27 +140,39 @@ def process_story(raw_story, tokenizer):
             if element.startswith("@highlight"):
                 break
             story_lines.append(element)
-        except IndexError as ie:  # if "@highlight" absent from file
-            raise ie
+        except IndexError:
+            # if "@highlight" is absent from the file we pop
+            # all elements until there is None.
+            return story_lines, None
 
     # gather summary lines
-    highlights_lines = list(filter(lambda t: not t.startswith("@highlight"), lines))
+    summary_lines = list(filter(lambda t: not t.startswith("@highlight"), lines))
 
-    # join the lines. This sequence is specific to Lapata & Liu (2019).
-    # Edit when you are adding a new model.
-    story_ids = [
-        tokenizer.add_special_tokens_single_sequence(tokenizer.encode(story))
-        for story in story_lines
+    return story_lines, summary_lines
+
+
+def _encode_for_summarization(story_lines, summary_lines, tokenizer):
+    """ Encode the story and summary lines, and join them
+    as specified in [1] by using `[SEP] [CLS]` tokens to separate
+    sentences.
+    """
+    story_lines_token_ids = [
+        tokenizer.add_special_tokens_single_sequence(tokenizer.encode(line))
+        for line in story_lines
     ]
-    summary_ids = [
-        tokenizer.add_special_tokens_single_sequence(tokenizer.encode(highlight))
-        for highlight in highlights_lines
+    summary_lines_token_ids = [
+        tokenizer.add_special_tokens_single_sequence(tokenizer.encode(line))
+        for line in summary_lines
     ]
 
-    flattened_story_ids = [token for sentence in story_ids for token in sentence]
-    flattened_summary_ids = [token for sentence in summary_ids for token in sentence]
+    story_token_ids = [
+        token for sentence in story_lines_token_ids for token in sentence
+    ]
+    summary_token_ids = [
+        token for sentence in summary_lines_token_ids for token in sentence
+    ]
 
-    return flattened_story_ids, flattened_summary_ids
+    return story_token_ids, summary_token_ids
 
 
 def _add_missing_period(line):
